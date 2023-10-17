@@ -1,6 +1,6 @@
 # Causal Context (NeurIPS 2023)
 
-Repository with code to reproduce the semi-synthetic experiments from "Causal Context Connects Counterfactual Fairness to Group Fairness and Robust Prediction.” Please see our [paper](https://arxiv.org/pdf/XXXX.XXXXX.pdf) for details.
+Repository with code to reproduce the semi-synthetic experiments from "Causal Context Connects Counterfactual Fairness to Robust Prediction and Group Fairness.” Please see our [paper](https://arxiv.org/pdf/XXXX.XXXXX.pdf) for details.
 
 ## Getting Started
 You could start by cloning the repository with the following commands.
@@ -22,11 +22,11 @@ python experiment.py
 
 ## Citation
 
-If you find this repository useful, please consider to cite our work:
+If you find this repository useful, please consider citing:
 
 ```
 @inproceedings{anthis2023causal,
-  title = {Causal Context Connects Counterfactual Fairness to Group Fairness and Robust Prediction},
+  title = {Causal Context Connects Counterfactual Fairness to Robust Prediction and Group Fairness},
   author = {Anthis, Jacy Reese and Veitch, Victor},
   booktitle = {Thirty-seventh Conference on Neural Information Processing Systems},
   year = {2023}

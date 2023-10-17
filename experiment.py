@@ -11,9 +11,9 @@ from sklearn.metrics import accuracy_score
 from datetime import datetime
 startTime = datetime.now()
 
-def income_experiment(n_samples:int, A_effect:float, m_error:float, so_prob:float, sp_prob:float, clf_type:str):
+def income_experiment(n_samples:int, A_effect:float, me_prob:float, sl_prob:float, sp_prob:float, clf_type:str):
   """
-  This experiment adds biases (measurement error, selection on outcome,
+  This experiment adds biases (measurement error, selection on label,
   selection on predictors) to the Adult income dataset and tests
   counterfactually fair (CF) predictors trained on each to show
   generalization via Theorem 1 and to validate Corollary 2.1.
@@ -21,16 +21,16 @@ def income_experiment(n_samples:int, A_effect:float, m_error:float, so_prob:floa
   Args:
   n_samples: number of sampled distributions to test
   A_effect: the frequency of A affecting X
-  m_error: the probability a y=1 label is measured incorrectly
-  so_prob: the probability a sample vulnerable to selection on outcome is selected out of the data
+  me_prob: the probability a sample vulnerable to measurement error is measured incorrectly
+  sl_prob: the probability a sample vulnerable to selection on label is selected out of the data
   sp_prob: the probability a sample vulnerable to selection on predictors is selected out of the data
   clf_type: classifier type
   """
 
   n_samples = 10
   A_effect = 0.8
-  m_error = 0.8
-  so_prob = 0.5
+  me_prob = 0.8
+  sl_prob = 0.5
   sp_prob = 0.8
   clf_type = 'xg'
 
@@ -57,11 +57,11 @@ def income_experiment(n_samples:int, A_effect:float, m_error:float, so_prob:floa
   results2 = pd.DataFrame(columns=['graph','dp_naive','eo_naive','c_naive',
                                   'dp_ftu','eo_ftu','c_ftu','dp_cf','eo_cf','c_cf'])
 
-  for graph in ['me','so','sp']:
+  for graph in ['me','sl','sp']:
       """
       Iterate through the graphs of interest.
       me: measurement error => (CF <=> demographic parity)
-      so: selection on outcome => (CF <=> equalized odds)
+      sl: selection on label => (CF <=> equalized odds)
       sp: selection on predictors => (CF <=> calibration)
       """
 
@@ -71,7 +71,7 @@ def income_experiment(n_samples:int, A_effect:float, m_error:float, so_prob:floa
 
       for i in range(n_samples):
           
-          print(f'Running sample {i+1} of {n_samples} for graph {graph}.')
+          print(f'Running sample {i+1} of {n_samples} for graph \'{graph}\'.')
 
           # Create a copy of the data for manipulation
           d = data.copy()
@@ -92,15 +92,15 @@ def income_experiment(n_samples:int, A_effect:float, m_error:float, so_prob:floa
           # Generate bias
           if graph == 'me':
               y_marginal = (d['income_>50K'] == 1).mean()
-              d.loc[(d['A'] == 1) & (np.random.rand(len(d)) < m_error), 'income_>50K'] = 0
-              d.loc[(d['A'] == 0) & (np.random.rand(len(d)) < (m_error*y_marginal)/(1-y_marginal)), 'income_>50K'] = 1
-          elif graph == 'so':
+              d.loc[(d['A'] == 1) & (np.random.rand(len(d)) < me_prob), 'income_>50K'] = 0
+              d.loc[(d['A'] == 0) & (np.random.rand(len(d)) < (me_prob*y_marginal)/(1-y_marginal)), 'income_>50K'] = 1
+          elif graph == 'sl':
               for index, row in d.iterrows():
                   if (row['income_>50K'] == 0) and (row['A'] == 1):
-                      if np.random.rand() < so_prob:
+                      if np.random.rand() < sl_prob:
                           d.drop(index, inplace=True)
                   elif (row['income_>50K'] == 1) and (row['A'] == 0):
-                      if np.random.rand() < so_prob:
+                      if np.random.rand() < sl_prob:
                           d.drop(index, inplace=True)
           elif graph == 'sp':
               median_age = np.median(data['age'])
@@ -224,10 +224,10 @@ def income_experiment(n_samples:int, A_effect:float, m_error:float, so_prob:floa
 
   print("""Validations:
   1. The CF classifier is more accurate on the target data than the training data.
-  2. The CF classifier approximately achieves DP in the ME graph, EO in the SO graph, and C in the SP graph.\n""")
+  2. The CF classifier approximately achieves DP in the ME graph, EO in the SL graph, and C in the SP graph.\n""")
 
 
-  print(f'Inputs: n_samples = {n_samples}, A_effect = {A_effect}, m_error = {m_error}, so_prob = {so_prob}, sp_prob = {sp_prob} , clf_type = {clf_type}')
+  print(f'Inputs: n_samples = {n_samples}, A_effect = {A_effect}, me_prob = {me_prob}, sl_prob = {sl_prob}, sp_prob = {sp_prob} , clf_type = {clf_type}')
   print(results1)
   print(results2)
 
@@ -236,16 +236,16 @@ Cell output (runtime ~30min):
 
 graph	acc_naive	acc_ftu	acc_cf	acc_naive_target	acc_ftu_target	acc_cf_target	acc_target_target
 0	me	0.828389	0.795609	0.769476	0.803101	0.811377	0.820405	0.867373
-1	so	0.877139	0.868589	0.861015	0.856579	0.865162	0.866344	0.865515
+1	sl	0.877139	0.868589	0.861015	0.856579	0.865162	0.866344	0.865515
 2	sp	0.865867	0.865615	0.865791	0.869906	0.869753	0.869922	0.868018
 
 graph	dp_naive	eo_naive	c_naive	dp_ftu	eo_ftu	c_ftu	dp_cf	eo_cf	c_cf
 0	me	-0.295976	-0.497652	-0.227772	-0.116520	-0.168690	-0.676656	-0.000473	0.090555	-0.815756
-1	so	0.289482	0.301609	0.017033	0.188254	0.097015	0.170343	0.132071	-0.002128	0.222536
+1	sl	0.289482	0.301609	0.017033	0.188254	0.097015	0.170343	0.132071	-0.002128	0.222536
 2	sp	0.143528	0.080142	0.002516	0.143331	0.079882	0.003227	0.142779	0.078918	0.003984
 """
 
 
-income_experiment(n_samples = 10, A_effect = 0.8, m_error = 0.8, so_prob = 0.5, sp_prob = 0.8, clf_type = 'xg')
+income_experiment(n_samples = 10, A_effect = 0.8, me_prob = 0.8, sl_prob = 0.5, sp_prob = 0.8, clf_type = 'xg')
 
 print(f'Runtime: {datetime.now() - startTime}')
